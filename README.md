@@ -1,20 +1,6 @@
-# ERC Remote Navigation Simulation
+# ERC Leo Sim
 
-This repository provides a Gazebo simulation of the Navigation and Science Task for the ERC Remote competition. \
-For the dockerized version, skip to the [Using Docker](#using-docker) section.
-
-## Table of Contents
-1. [Prerequisites](#prerequisites)
-1. [Building](#building)
-1. [Updating](#updating)
-1. [Launching](#launching)
-1. [Using Docker](#using-docker)
-1. [ROS API](#ros-api)
-    1. [Subscribed Topics](#subscribed-topics)
-    1. [Published Topics](#published-topics)
-    1. [Services](#services)
-    1. [Parameters Set](#parameters-set)
-1. [Troubleshooting](#troubleshooting)
+This repository is a fork of https://github.com/EuropeanRoverChallenge/ERC-Remote-Navigation-Sim that enables a Cave world (loaded from https://github.com/LTU-RAI/gazebo_cave_world) and several configurations of LEO rover.
 
 ## Prerequisites
 
@@ -34,16 +20,7 @@ sudo apt install python3-rosdep python3-catkin-tools
 ```
 
 ## Building
-This repository uses git submodules to link external repositories that contain the ROS packages. \
-When cloning this repository, add the `--recurse-submodules` flag to recursively pull the submodules:
-```
-git clone --recurse-submodules https://github.com/EuropeanRoverChallenge/ERC-Remote-Navigation-Sim.git
-```
-or if you have already cloned the repository without this option, clone the submodules using:
-```sh
-git submodule update --init
-```
-Use the `rosdep` tool to install any missing dependencies. If you are running `rosdep` for the first time, you might have to run:
+You need to simply clone this repository, then use rosdep to install any missing dependencies. If you are running `rosdep` for the first time, you might have to run:
 ```sh
 sudo rosdep init
 ```
@@ -55,29 +32,7 @@ rosdep install --rosdistro <distro> --from-paths src -iy
 ```
 Now, use the `catkin` tool to build the workspace:
 ```sh
-catkin config --extend /opt/ros/<distro>
-catkin build
-```
-
-## Updating
-To pull the newest commits and recursively update the submodules, simply type:
-```sh
-git pull --recurse-submodules
-```
-
-If you have already pulled the new commits without the `--recurse-submodules` flag, you can simply update the submodules:
-```sh
-git submodule update --init
-```
-
-Make sure you have installed any additional dependencies the new versions of the packages may have pulled by running the `rosdep install` command again:
-```
-rosdep install --rosdistro <distro> --from-paths src -iy
-```
-
-And rebuild the workspace:
-```
-catkin build
+catkin_make
 ```
 
 ## Launching
@@ -90,6 +45,11 @@ source devel/setup.bash
 To start the simulation and gazebo GUI, type:
 ```
 roslaunch leo_erc_gazebo leo_marsyard.launch
+```
+
+You can also try the Cave environnement configuration with:
+```
+roslaunch leo_erc_gazebo leo_cave.launch
 ```
 
 To visualize the model in Rviz, type on another terminal session:
@@ -117,65 +77,6 @@ The command mapping was set for the Xbox 360 controller and looks like this:
 | Right Joystick Left/Right | angular velocity                  |
 
 To modify it, you can edit the `joy_mapping.yaml` file inside the `leo_erc_teleop` package.
-
-## Using Docker
-
----
-**NOTE**
-
-All of the commands in this section should be executed as the `root` user, unless you have configured docker to be [managable as a non-root user](https://docs.docker.com/engine/install/linux-postinstall/).
-
----
-
-Make sure the [Docker Engine](https://docs.docker.com/engine/install/#server) is installed and the `docker` service is running:
-```
-systemctl start docker
-```
-
-Then, either pull the newest prebuilt Docker image:
-```
-docker pull ghcr.io/europeanroverchallenge/erc-remote-navigation-sim:latest
-docker tag ghcr.io/europeanroverchallenge/erc-remote-navigation-sim:latest erc_navigation_sim
-```
-
-or build the image yourself:
-```
-docker build -t erc_navigation_sim .
-```
-
-Permit the root user to connect to X window display:
-```
-xhost +local:root
-```
-
-Start the docker container:
-```
-docker run --rm -it -v /tmp/.X11-unix:/tmp/.X11-unix -e DISPLAY --name erc_sim erc_navigation_sim
-```
-
-If you want the simulation to be able to communicate with ROS nodes running on the host or another docker container, add `--net=host` flag:
-```
-docker run --rm -it -v /tmp/.X11-unix:/tmp/.X11-unix -e DISPLAY --name erc_sim --net=host erc_navigation_sim
-```
-
-Gazebo may not run or work really slow without the GPU acceleration. \
-If you are running the system with an integrated AMD/Intel Graphics card, try adding `--device=/dev/dri` flag:
-```
-docker run --rm -it -v /tmp/.X11-unix:/tmp/.X11-unix -e DISPLAY --name erc_sim --device=/dev/dri erc_navigation_sim
-```
-
-To use an Nvidia card, you need to have proprietary drivers installed, as well as the [Nvidia Container Toolkit](https://github.com/NVIDIA/nvidia-docker). \
-Add the `--gpus all` flag and set `NVIDIA_DRIVER_CAPABILITIES` variable to `all`:
-```
-docker run --rm -it -v /tmp/.X11-unix:/tmp/.X11-unix -e DISPLAY --name erc_sim --gpus all -e NVIDIA_DRIVER_CAPABILITIES=all erc_navigation_sim
-```
-
-To use the other ROS packages, start `bash` inside the running container:
-```
-docker exec -it erc_sim /ros_entrypoint.sh bash
-```
-
-and use the examples from the [Launching](#launching) section.
 
 ## ROS API
 
@@ -322,10 +223,3 @@ This section describes ROS topics, services and parameters that are available on
 [std_msgs/UInt8]: http://docs.ros.org/en/melodic/api/std_msgs/html/msg/UInt8.html
 [std_srvs/Trigger]: http://docs.ros.org/en/api/std_srvs/html/srv/Trigger.html
 
-## Troubleshooting
-
-### D-Bus error
-The D-Bus error may occure while trying to launch gazebo inside the docker container. The easiest way to solve the problem is to use the `--privileged` flag to give extended privileges to this container, for example:
-```
-docker run --rm --net=host -it -v /tmp/.X11-unix:/tmp/.X11-unix -e DISPLAY --gpus all -e NVIDIA_DRIVER_CAPABILITIES=all --privileged --name erc_sim erc_navigation_sim
-```
