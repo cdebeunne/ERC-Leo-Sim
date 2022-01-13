@@ -1,0 +1,225 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://ros.org/wiki/xacro">
+
+  <xacro:property name="baseline" value="0.12"/>
+
+  <xacro:macro name="zed2_fisheye" 
+               params="link_prefix:=''
+                       joint_prefix:=''">
+
+    <!-- Camera Center -->
+    <link name="${link_prefix}zed2_camera_center">
+      <inertial>
+        <mass value="0.16140"/>
+        <origin xyz="0 0 0"/>
+        <inertia
+          ixx="0.0003947" ixy="0.0" ixz="3.3365e-8"
+          iyy="2.417e-5" iyz="0.0"
+          izz="0.0003973"/>
+      </inertial>
+      <visual>
+        <geometry>
+          <mesh filename="package://leo_erc_description/models/ZED2.dae"/>
+        </geometry>
+      </visual>
+      <collision>
+        <geometry>
+          <mesh filename="package://leo_erc_description/models/ZED2.dae"/>
+        </geometry>
+      </collision>
+    </link>
+
+    <!-- Left Camera -->
+    <joint name="${joint_prefix}zed2_left_camera_joint" type="fixed">
+      <parent link="${link_prefix}zed2_camera_center"/>
+      <child link="${link_prefix}zed2_left_camera_frame"/>
+      <origin xyz="0 ${baseline/2} 0" rpy="0 0 0" />
+    </joint>
+
+    <link name="${link_prefix}zed2_left_camera_frame" />
+
+    <joint name="${joint_prefix}zed2_left_camera_optical_joint" type="fixed">
+      <origin xyz="0 0 0" rpy="-${pi/2} 0.0 -${pi/2}"/>
+      <parent link="${link_prefix}zed2_left_camera_frame"/>
+      <child link="${link_prefix}zed2_left_camera_optical_frame"/>
+    </joint>
+
+    <link name="${link_prefix}zed2_left_camera_optical_frame"/>
+
+    <!-- Right Camera -->
+    <joint name="${joint_prefix}zed2_right_camera_joint" type="fixed">
+      <parent link="${link_prefix}zed2_camera_center"/>
+      <child link="${link_prefix}zed2_right_camera_frame"/>
+      <origin xyz="0 -${baseline/2} 0" rpy="0 0 0" />
+    </joint>
+
+    <link name="${link_prefix}zed2_right_camera_frame" />
+
+    <joint name="${joint_prefix}zed2_right_camera_optical_joint" type="fixed">
+      <origin xyz="0 0 0" rpy="-${pi/2} 0.0 -${pi/2}"/>
+      <parent link="${link_prefix}zed2_right_camera_frame"/>
+      <child link="${link_prefix}zed2_right_camera_optical_frame"/>
+    </joint>
+
+    <link name="${link_prefix}zed2_right_camera_optical_frame"/>
+
+    <!-- Sensors -->
+    <joint name="${joint_prefix}zed2_mag_joint" type="fixed">
+      <parent link="${link_prefix}zed2_camera_center"/>
+      <child link="${link_prefix}zed2_mag_link"/>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+    </joint>
+
+    <link name="${link_prefix}zed2_mag_link" />
+
+    <joint name="${joint_prefix}zed2_baro_joint" type="fixed">
+      <parent link="${link_prefix}zed2_camera_center"/>
+      <child link="${link_prefix}zed2_baro_link"/>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+    </joint>
+
+    <link name="${link_prefix}zed2_baro_link" />
+
+    <joint name="${joint_prefix}zed2_temp_left_joint" type="fixed">
+      <parent link="${link_prefix}zed2_left_camera_frame"/>
+      <child link="${link_prefix}zed2_temp_left_link"/>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+    </joint>
+
+    <link name="${link_prefix}zed2_temp_left_link" />
+
+    <joint name="${joint_prefix}zed2_temp_right_joint" type="fixed">
+        <parent link="${link_prefix}zed2_right_camera_frame"/>
+        <child link="${link_prefix}zed2_temp_right_link"/>
+        <origin xyz="0 0 0" rpy="0 0 0" />
+    </joint>
+
+    <link name="${link_prefix}zed2_temp_right_link" />
+
+  </xacro:macro>
+
+
+  <xacro:macro name="zed2_fisheye_gazebo"
+               params="robot_ns:=''">
+
+    <xacro:property name="link_prefix" value=""/>
+    <xacro:if value="${robot_ns != '' and robot_ns != '/'}">
+      <xacro:property name="link_prefix" value="${robot_ns}/"/>
+    </xacro:if>
+
+    <!-- Left camera -->
+    <gazebo reference="${link_prefix}zed2_left_camera_frame">
+      <!-- Raw images (with lens distortion) -->
+      <sensor name="camera_left" type="wideanglecamera">
+        <always_on>true</always_on>
+        <update_rate>30</update_rate>
+        <camera name="leo_camera_left">
+          <pose>0 -0.1 0 0 0 0</pose>
+          <horizontal_fov>3.141592</horizontal_fov>
+          <image>
+            <width>848</width>
+            <height>800</height>
+            <format>R8G8B8</format>
+          </image>
+          <clip>
+            <near>0.15</near>
+            <far>1500</far>
+          </clip>
+          <noise>
+            <type>gaussian</type>
+            <mean>0.0</mean>
+            <stddev>0.0001</stddev>
+          </noise>
+          <lens>
+            <type>custom</type> 
+            <custom_function> <!-- manually defined mapping function r = c1*f*fun(theta/c2 + c3) More information here: https://en.wikipedia.org/wiki/Fisheye_lens#Mapping_function -->
+              <c1>1.0</c1>    <!-- linear scaling -->
+              <c2>1.95</c2>       <!-- angle scaling -->
+              <f>6</f>       <!-- one more scaling parameter -->
+              <fun>tan</fun>   <!-- one of sin,tan,id -->
+            </custom_function>
+            <scale_to_hfov>true</scale_to_hfov>  <!-- if it is set to `true` your horizontal FOV will ramain as defined, othervise it depends on lens type and custom function, if there is one -->
+            <!-- clip everything that is outside of this angle -->
+            <cutoff_angle>2.84488668</cutoff_angle>
+            <env_texture_size>512</env_texture_size> <!-- resolution of the cubemap texture, the highter it is - the sharper is your image -->
+          </lens>
+        </camera>
+        <plugin name="camera_controller" filename="libgazebo_ros_camera.so">
+          <robotNamespace>${robot_ns}</robotNamespace>
+          <cameraName>/camera_left</cameraName>
+          <imageTopicName>fisheye_image_raw</imageTopicName>
+          <cameraInfoTopicName>camera_info</cameraInfoTopicName>
+          <frameName>camera_link</frameName>
+          <hackBaseline>0</hackBaseline>
+        </plugin>
+      </sensor>
+    </gazebo>
+
+    <!-- Right camera -->
+    <gazebo reference="${link_prefix}zed2_right_camera_frame">
+      <sensor name="camera_right" type="wideanglecamera">
+        <always_on>true</always_on>
+        <update_rate>30</update_rate>
+        <camera name="leo_camera_right">
+          <pose>0 0.1 0 0 0 0</pose>
+          <horizontal_fov>3.141592</horizontal_fov>
+          <image>
+            <width>848</width>
+            <height>800</height>
+            <format>R8G8B8</format>
+          </image>
+          <clip>
+            <near>0.15</near>
+            <far>1500</far>
+          </clip>
+          <noise>
+            <type>gaussian</type>
+            <mean>0.0</mean>
+            <stddev>0.0001</stddev>
+          </noise>
+          <lens>
+            <type>custom</type> 
+            <custom_function> <!-- manually defined mapping function r = c1*f*fun(theta/c2 + c3) More information here: https://en.wikipedia.org/wiki/Fisheye_lens#Mapping_function -->
+              <c1>1.0</c1>    <!-- linear scaling -->
+              <c2>1.95</c2>       <!-- angle scaling -->
+              <f>6</f>       <!-- one more scaling parameter -->
+              <fun>tan</fun>   <!-- one of sin,tan,id -->
+            </custom_function>
+            <scale_to_hfov>true</scale_to_hfov>  <!-- if it is set to `true` your horizontal FOV will ramain as defined, othervise it depends on lens type and custom function, if there is one -->
+            <!-- clip everything that is outside of this angle -->
+            <cutoff_angle>2.84488668</cutoff_angle>
+            <env_texture_size>512</env_texture_size> <!-- resolution of the cubemap texture, the highter it is - the sharper is your image -->
+          </lens>
+        </camera>
+        <plugin name="camera_controller" filename="libgazebo_ros_camera.so">
+          <robotNamespace>${robot_ns}</robotNamespace>
+          <cameraName>/camera_right</cameraName>
+          <imageTopicName>fisheye_image_raw</imageTopicName>
+          <cameraInfoTopicName>camera_info</cameraInfoTopicName>
+          <frameName>camera_link</frameName>
+          <hackBaseline>0</hackBaseline>
+        </plugin>
+      </sensor>
+    </gazebo>
+
+    <!-- IMU -->
+    <gazebo reference="${link_prefix}zed2_left_camera_frame">
+      <sensor type="imu" name="zed2_imu_sensor">
+        <update_rate>100</update_rate>
+        <plugin filename="libgazebo_ros_imu_sensor.so" name="imu_plugin">
+          <robotNamespace>${robot_ns}</robotNamespace>
+          <topicName>zed2/imu/data</topicName>
+          <frameName>zed2_imu_link</frameName>
+          <updateRateHZ>100.0</updateRateHZ>
+          <gaussianNoise>0.01</gaussianNoise>
+          <initialOrientationAsReference>false</initialOrientationAsReference>
+          <!-- IMU frame offset copied from an actual ZED2 camera -->
+          <xyzOffset>-0.002 -0.023 -0.002</xyzOffset>
+          <rpyOffset>0.0014025 -0.0000012 -0.0016915</rpyOffset>
+        </plugin>
+      </sensor>
+    </gazebo>
+
+  </xacro:macro>
+
+</robot>
