@@ -1,7 +1,7 @@
 <launch>
 
-  <arg name="x" default="-10.0"/>
-  <arg name="y" default="120.0"/>
+  <arg name="x" default="0.0"/>
+  <arg name="y" default="0.0"/>
   <arg name="z" default="1.0"/>
   <arg name="R" default="0.0"/>
   <arg name="P" default="0.0"/>

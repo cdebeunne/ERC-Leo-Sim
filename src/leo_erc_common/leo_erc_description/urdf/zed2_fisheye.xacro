@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <robot xmlns:xacro="http://ros.org/wiki/xacro">
 
-  <xacro:property name="baseline" value="0.12"/>
+  <xacro:property name="baseline" value="0.2"/>
 
   <xacro:macro name="zed2_fisheye" 
                params="link_prefix:=''
@@ -114,11 +114,11 @@
         <always_on>true</always_on>
         <update_rate>30</update_rate>
         <camera name="leo_camera_left">
-          <pose>0 -0.1 0 0 0 0</pose>
-          <horizontal_fov>3.141592</horizontal_fov>
+          <pose>0 0 0 0 0 0</pose>
+          <horizontal_fov>6.2831</horizontal_fov>
           <image>
-            <width>848</width>
-            <height>800</height>
+            <width>1696</width>
+            <height>1696</height>
             <format>R8G8B8</format>
           </image>
           <clip>
@@ -134,14 +134,15 @@
             <type>custom</type> 
             <custom_function> <!-- manually defined mapping function r = c1*f*fun(theta/c2 + c3) More information here: https://en.wikipedia.org/wiki/Fisheye_lens#Mapping_function -->
               <c1>1.0</c1>    <!-- linear scaling -->
-              <c2>1.95</c2>       <!-- angle scaling -->
-              <f>6</f>       <!-- one more scaling parameter -->
-              <fun>tan</fun>   <!-- one of sin,tan,id -->
-            </custom_function>
-            <scale_to_hfov>true</scale_to_hfov>  <!-- if it is set to `true` your horizontal FOV will ramain as defined, othervise it depends on lens type and custom function, if there is one -->
+              <c2>1.0</c2>       <!-- angle scaling -->
+              <f>1.0</f>       <!-- one more scaling parameter -->
+              <fun>id</fun>   <!-- one of sin,tan,id -->
+              <c3>0.0</c3>
+            </custom_function>  
+            <scale_to_hfov>false</scale_to_hfov>  <!-- if it is set to `true` your horizontal FOV will ramain as defined, othervise it depends on lens type and custom function, if there is one -->
             <!-- clip everything that is outside of this angle -->
-            <cutoff_angle>2.84488668</cutoff_angle>
-            <env_texture_size>512</env_texture_size> <!-- resolution of the cubemap texture, the highter it is - the sharper is your image -->
+            <cutoff_angle>3.1415</cutoff_angle> <!-- it is usually FOV/2 -->
+            <env_texture_size>1024</env_texture_size> <!-- resolution of the cubemap texture, the highter it is - the sharper is your image -->
           </lens>
         </camera>
         <plugin name="camera_controller" filename="libgazebo_ros_camera.so">
@@ -161,11 +162,11 @@
         <always_on>true</always_on>
         <update_rate>30</update_rate>
         <camera name="leo_camera_right">
-          <pose>0 0.1 0 0 0 0</pose>
+          <pose>0 0 0 0 0 0</pose>
           <horizontal_fov>3.141592</horizontal_fov>
           <image>
-            <width>848</width>
-            <height>800</height>
+            <width>1696</width>
+            <height>1696</height>
             <format>R8G8B8</format>
           </image>
           <clip>
@@ -181,14 +182,15 @@
             <type>custom</type> 
             <custom_function> <!-- manually defined mapping function r = c1*f*fun(theta/c2 + c3) More information here: https://en.wikipedia.org/wiki/Fisheye_lens#Mapping_function -->
               <c1>1.0</c1>    <!-- linear scaling -->
-              <c2>1.95</c2>       <!-- angle scaling -->
-              <f>6</f>       <!-- one more scaling parameter -->
-              <fun>tan</fun>   <!-- one of sin,tan,id -->
+              <c2>1.0</c2>       <!-- angle scaling -->
+              <f>1.0</f>       <!-- one more scaling parameter -->
+              <fun>id</fun>   <!-- one of sin,tan,id -->
+              <c3>0.0</c3>
             </custom_function>
-            <scale_to_hfov>true</scale_to_hfov>  <!-- if it is set to `true` your horizontal FOV will ramain as defined, othervise it depends on lens type and custom function, if there is one -->
+            <scale_to_hfov>false</scale_to_hfov>  <!-- if it is set to `true` your horizontal FOV will ramain as defined, othervise it depends on lens type and custom function, if there is one -->
             <!-- clip everything that is outside of this angle -->
-            <cutoff_angle>2.84488668</cutoff_angle>
-            <env_texture_size>512</env_texture_size> <!-- resolution of the cubemap texture, the highter it is - the sharper is your image -->
+            <cutoff_angle>1.570796</cutoff_angle> <!-- it is usually FOV/2 -->
+            <env_texture_size>1024</env_texture_size> <!-- resolution of the cubemap texture, the highter it is - the sharper is your image -->
           </lens>
         </camera>
         <plugin name="camera_controller" filename="libgazebo_ros_camera.so">

@@ -223,3 +223,11 @@ This section describes ROS topics, services and parameters that are available on
 [std_msgs/UInt8]: http://docs.ros.org/en/melodic/api/std_msgs/html/msg/UInt8.html
 [std_srvs/Trigger]: http://docs.ros.org/en/api/std_srvs/html/srv/Trigger.html
 
+### Troubleshooting
+
+* If there is a problem with the spawner, a gazebo server may be still running. You can fix this by running:
+```
+killall -9 gzclient
+killall -9 gzserver
+```
+
